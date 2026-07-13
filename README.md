@@ -1,4 +1,4 @@
-# 🏚️ Post-Disaster Damage Assessment & Triage System
+# Post-Disaster Damage Assessment & Triage System
 
 Sistem end-to-end untuk menilai dan memprioritaskan kerusakan bangunan pasca-bencana dari
 citra satelit pre/post-bencana, menggunakan **SegFormer** untuk segmentasi bangunan,
@@ -11,7 +11,7 @@ DeepLabV3+ sebagai baseline.
 
 ---
 
-## 🧱 Arsitektur
+## Arsitektur
 
 ```
 Frontend (Streamlit)  ──HTTP──►  Backend (FastAPI, main.py)
@@ -30,10 +30,10 @@ langsung, supaya masing-masing bagian bisa dikembangkan/diuji secara independen.
 
 ---
 
-## 📁 Struktur Folder
+## Struktur Folder
 
 ```
-disaster-ai/
+bootcamp/
 │
 ├── main.py                  # Backend FastAPI (orchestrator)
 ├── streamlit_app.py          # Frontend dashboard
@@ -41,11 +41,11 @@ disaster-ai/
 ├── .env.example               # Salin jadi .env, isi API key kamu
 │
 ├── models/
-│   ├── segformer_best.pt      # ⚠️ tidak ikut di-commit (lihat bagian "File Besar" di bawah)
+│   ├── segformer_best.pt      # tidak ikut di-commit (lihat bagian "File Besar" di bawah)
 │   └── config.json
 │
 ├── rag/
-│   ├── sop_faiss.index        # ⚠️ tidak ikut di-commit — generate ulang, lihat di bawah
+│   ├── sop_faiss.index        # tidak ikut di-commit — generate ulang, lihat di bawah
 │   ├── sop_chunks.json
 │   └── bnpb_sop.pdf           # opsional, dokumen sumber SOP
 │
@@ -63,7 +63,7 @@ disaster-ai/
 
 ---
 
-## ⚙️ Instalasi
+## Instalasi
 
 1. Clone repo ini, lalu masuk ke foldernya:
    ```bash
@@ -104,7 +104,7 @@ disaster-ai/
 
 ---
 
-## ▶️ Menjalankan
+## ▶Menjalankan
 
 Butuh **dua terminal berjalan bersamaan**:
 
@@ -124,13 +124,13 @@ Buka browser ke `http://localhost:8501`, upload gambar pre-disaster & post-disas
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 Lihat `.env.example` untuk daftar lengkap. Yang penting:
 
 | Variabel | Wajib? | Default | Keterangan |
 |---|---|---|---|
-| `GOOGLE_API_KEY` | ✅ Ya | — | API key Gemini, untuk fitur RAG + laporan naratif |
+| `GOOGLE_API_KEY` | Ya | — | API key Gemini, untuk fitur RAG + laporan naratif |
 | `MODEL_DIR` | Tidak | `models` | Folder checkpoint SegFormer |
 | `CHECKPOINT_NAME` | Tidak | `segformer_best.pt` | Nama file checkpoint |
 | `RAG_DIR` | Tidak | `rag` | Folder FAISS index & chunk SOP |
@@ -142,7 +142,7 @@ decision support tetap berfungsi) — hanya bagian **AI Report (RAG-Grounded)** 
 
 ---
 
-## 📦 File Besar (Model & FAISS Index)
+## File Besar (Model & FAISS Index)
 
 `models/*.pt` dan `rag/sop_faiss.index` **tidak ikut di-commit** ke repo ini (lihat
 `.gitignore`) karena ukurannya besar dan melebihi batas wajar GitHub (limit keras 100MB/file).
@@ -165,7 +165,7 @@ git add .gitattributes
 
 ---
 
-## 🧪 Menguji Tanpa Data Asli
+## Menguji Tanpa Data Asli
 
 Kalau belum sempat mengunduh dataset xBD dari Kaggle, gunakan pasangan gambar sintetis
 untuk uji alur teknis (upload → segmentasi → difference map → dashboard) — bukan untuk
@@ -173,7 +173,7 @@ menilai akurasi model. Pastikan ukuran pre & post sama persis sebelum upload.
 
 ---
 
-## 📋 Ringkasan Fitur
+## Ringkasan Fitur
 
 - **EDA** — distribusi kelas kerusakan, imbalance pixel building vs background
 - **Model comparison** — SegFormer vs U-Net vs DeepLabV3+
