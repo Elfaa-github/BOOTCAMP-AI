@@ -68,7 +68,7 @@ bootcamp/
 1. Clone repo ini, lalu masuk ke foldernya:
    ```bash
    git clone https://github.com/Elfaa-github/BOOTCAMP-AI.git
-   cd NAMA-REPO
+   cd BOOTCAMP-AI
    ```
 
 2. Buat virtual environment (opsional tapi disarankan):
