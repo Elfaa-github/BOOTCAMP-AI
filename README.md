@@ -25,7 +25,7 @@ Frontend (Streamlit)  ──HTTP──►  Backend (FastAPI, main.py)
         - Damage stats                        (lewat services/gemini_service.py)
 ```
 
-`main.py` hanya berperan sebagai orchestrator — tidak berisi logika model atau RAG secara
+`main.py` hanya berperan sebagai orchestrator, tidak berisi logika model atau RAG secara
 langsung, supaya masing-masing bagian bisa dikembangkan/diuji secara independen.
 
 ---
@@ -95,27 +95,27 @@ bootcamp/
    Ambil API key gratis di https://aistudio.google.com/apikey
 
    > Catatan: `.env` **tidak otomatis dibaca oleh PowerShell**. Cara paling gampang di
-   > Windows: set manual di terminal sebelum menjalankan backend —
+   > Windows adalah set manual di terminal sebelum menjalankan backend
    > ```powershell
    > $env:GOOGLE_API_KEY = "isi_api_key_kamu"
    > ```
-   > (berlaku untuk sesi terminal itu saja). Untuk permanen, gunakan
+   > Berlaku untuk sesi terminal itu saja. Untuk permanen, gunakan
    > `setx GOOGLE_API_KEY "isi_api_key_kamu"` lalu buka terminal baru.
 
 ---
 
-## ▶Menjalankan
+## Running
 
 Butuh **dua terminal berjalan bersamaan**:
 
-**Terminal 1 — Backend (FastAPI):**
+**Terminal 1 - Backend (FastAPI):**
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 Tunggu sampai muncul `Uvicorn running on http://0.0.0.0:8000` dan `RagService siap.`
 (kalau masih warning `GOOGLE_API_KEY tidak diset`, berarti env var belum kebaca di terminal ini).
 
-**Terminal 2 — Frontend (Streamlit):**
+**Terminal 2 - Frontend (Streamlit):**
 ```bash
 streamlit run streamlit_app.py
 ```
@@ -138,7 +138,7 @@ Lihat `.env.example` untuk daftar lengkap. Yang penting:
 | `API_URL` | Tidak (frontend) | `http://localhost:8000` | Alamat backend, diisi ulang saat deployment |
 
 Tanpa `GOOGLE_API_KEY`, aplikasi tetap bisa jalan (segmentasi, difference map, statistik,
-decision support tetap berfungsi) — hanya bagian **AI Report (RAG-Grounded)** yang nonaktif.
+decision support tetap berfungsi), hanya bagian **AI Report (RAG-Grounded)** yang nonaktif.
 
 ---
 
@@ -148,10 +148,10 @@ decision support tetap berfungsi) — hanya bagian **AI Report (RAG-Grounded)** 
 `.gitignore`) karena ukurannya besar dan melebihi batas wajar GitHub (limit keras 100MB/file).
 
 Untuk mendapatkan file-file ini:
-- **Model checkpoint** (`segformer_best.pt`): jalankan ulang notebook training
-  (bagian "Model & Training Loop") — hasil checkpoint otomatis tersimpan.
-- **FAISS index + chunk SOP** (`sop_faiss.index`, `sop_chunks.json`): jalankan
-  `services/pdf_service.py` → fungsi `build_sop_index(pdf_path, output_dir, gemini_service)`
+- **Model checkpoint** (`segformer_best.pt`), jalankan ulang notebook training
+  (bagian "Model & Training Loop"), hasil checkpoint otomatis tersimpan.
+- **FAISS index + chunk SOP** (`sop_faiss.index`, `sop_chunks.json`), jalankan
+  `services/pdf_service.py` lalu fungsi `build_sop_index(pdf_path, output_dir, gemini_service)`
   dengan PDF SOP BNPB (atau dokumen SOP lain) sebagai input.
 
 Kalau file-file ini memang perlu ikut di-commit (misal untuk kemudahan kolaborasi tim),
