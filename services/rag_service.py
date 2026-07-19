@@ -15,14 +15,29 @@ class RagService:
         self.gemini = gemini_service or GeminiService(api_key=google_api_key)
 
     def retrieve(self, query, top_k=3):
-        q_emb = self.gemini.embed([query], task_type="RETRIEVAL_QUERY")
+        # allow_fallback=False: query WAJIB pakai model embedding yang sama dengan
+        # yang membangun index — model lain menghasilkan vektor di ruang berbeda
+        # dan retrieval-nya jadi ngawur tanpa error.
+        q_emb = self.gemini.embed([query], task_type="RETRIEVAL_QUERY", allow_fallback=False)
+        if q_emb.shape[1] != self.index.d:
+            raise ValueError(
+                f"Dimensi embedding query ({q_emb.shape[1]}) != dimensi index FAISS ({self.index.d}). "
+                f"Index dibangun dengan model embedding berbeda dari '{self.gemini.embed_model}' — "
+                "rebuild index atau set GEMINI_EMBED_MODEL ke model yang dipakai saat build."
+            )
         faiss.normalize_L2(q_emb)
         scores, idxs = self.index.search(q_emb, top_k)
         return [(self.chunks[i], float(scores[0][j])) for j, i in enumerate(idxs[0]) if i != -1]
 
     def generate_report(self, stats: dict, top_k=3):
-        query = (f"Priority {stats['priority']}, damage {stats['damage_percentage']}%. "
-                 f"Rekomendasi alokasi sumber daya dan evakuasi.")
+        # Query dibangun dari seluruh konteks kejadian, bukan cuma priority + damage%,
+        # supaya retrieval-nya berbeda antar kasus (tidak degenerate ke 4 query yang sama).
+        logistics = ", ".join(stats.get("required_logistics", []))
+        query = (f"Prioritas {stats['priority']}, kerusakan bangunan {stats['damage_percentage']}%, "
+                 f"{stats.get('buildings_damaged', '?')} dari {stats.get('buildings_total', '?')} bangunan rusak, "
+                 f"estimasi luas terdampak {stats.get('area_m2', '?')} m2, "
+                 f"radius evakuasi {stats.get('evacuation_radius_km', '?')} km. "
+                 f"Prosedur evakuasi, alokasi sumber daya, dan kebutuhan logistik: {logistics}.")
         retrieved = self.retrieve(query, top_k=top_k)
         context = "\n".join(f"- {chunk}" for chunk, _score in retrieved)
 

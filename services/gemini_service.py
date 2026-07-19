@@ -76,10 +76,19 @@ class GeminiService:
                 last_error = GeminiServiceError(f"Timeout saat embed dengan model {model}")
         raise last_error or GeminiServiceError("Embedding gagal tanpa alasan spesifik.")
 
-    def embed(self, texts: List[str], task_type: str = "RETRIEVAL_DOCUMENT") -> np.ndarray:
+    def embed(self, texts: List[str], task_type: str = "RETRIEVAL_DOCUMENT",
+              allow_fallback: bool = True) -> np.ndarray:
         """Embed satu atau banyak teks. task_type: RETRIEVAL_DOCUMENT (untuk chunk SOP)
-        atau RETRIEVAL_QUERY (untuk query pencarian)."""
-        models_to_try = [self.embed_model] + [m for m in EMBEDDING_MODEL_FALLBACKS if m != self.embed_model]
+        atau RETRIEVAL_QUERY (untuk query pencarian).
+
+        allow_fallback=False WAJIB dipakai saat query ke index FAISS yang sudah jadi:
+        index dibangun dengan satu model embedding tertentu, dan vektor dari model lain
+        hidup di ruang berbeda — fallback diam-diam akan membuat hasil retrieval ngawur
+        tanpa error. Fallback hanya aman saat MEMBANGUN index dari nol."""
+        if allow_fallback:
+            models_to_try = [self.embed_model] + [m for m in EMBEDDING_MODEL_FALLBACKS if m != self.embed_model]
+        else:
+            models_to_try = [self.embed_model]
 
         for model in models_to_try:
             try:

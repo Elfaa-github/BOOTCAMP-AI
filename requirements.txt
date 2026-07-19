@@ -1,1 +1,20 @@
+# Backend (FastAPI)
+fastapi
+uvicorn
+python-multipart
 python-dotenv
+numpy
+opencv-python
+torch
+transformers
+albumentations
+faiss-cpu
+requests
+
+# Frontend (Streamlit)
+streamlit
+pillow
+reportlab
+
+# Ingestion PDF SOP (services/pdf_service.py)
+pypdf

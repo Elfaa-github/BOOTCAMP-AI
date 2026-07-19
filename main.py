@@ -99,11 +99,14 @@ def _diff_to_visual(diff: np.ndarray) -> np.ndarray:
     return vis
 
 
-def _count_buildings(binary_mask: np.ndarray) -> int:
+def _count_buildings(binary_mask: np.ndarray, min_area_px: int = 20) -> int:
     """Hitung jumlah komponen terhubung sebagai proxy jumlah bangunan pada mask biner.
-    Ini estimasi kasar (connected components), bukan instance segmentation sungguhan."""
-    n_labels, _ = cv2.connectedComponents(binary_mask.astype(np.uint8))
-    return max(n_labels - 1, 0)  # -1 untuk background
+    Ini estimasi kasar (connected components), bukan instance segmentation sungguhan.
+    Blob lebih kecil dari min_area_px diabaikan supaya noise beberapa piksel
+    tidak ikut terhitung sebagai bangunan."""
+    n_labels, _, comp_stats, _ = cv2.connectedComponentsWithStats(binary_mask.astype(np.uint8))
+    # baris 0 = background; kolom cv2.CC_STAT_AREA = luas blob dalam piksel
+    return int(np.sum(comp_stats[1:, cv2.CC_STAT_AREA] >= min_area_px))
 
 
 # ----------------------------------------------------------------------
@@ -130,6 +133,13 @@ async def analyze(pre_image: UploadFile = File(...), post_image: UploadFile = Fi
             status_code=400,
             content={"error": "Salah satu gambar tidak valid atau gagal dibaca. "
                               "Pastikan format PNG/JPG dan file tidak corrupt."},
+        )
+
+    MAX_SIDE = 8192  # batas dimensi supaya gambar raksasa tidak bikin backend kehabisan memori
+    if max(pre_bgr.shape[:2]) > MAX_SIDE or max(post_bgr.shape[:2]) > MAX_SIDE:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Dimensi gambar melebihi batas {MAX_SIDE}px. Perkecil gambar terlebih dahulu."},
         )
 
     if pre_bgr.shape[:2] != post_bgr.shape[:2]:
