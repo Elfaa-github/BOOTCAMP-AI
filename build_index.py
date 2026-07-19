@@ -43,6 +43,10 @@ index.add(embeddings)
 faiss.write_index(index, os.path.join(RAG_DIR, "sop_faiss.index"))
 with open(os.path.join(RAG_DIR, "sop_chunks.json"), "w", encoding="utf-8") as f:
     json.dump(all_chunks, f, ensure_ascii=False, indent=2)
+# Metadata supaya RagService selalu query dengan model yang sama dengan pembuat index
+with open(os.path.join(RAG_DIR, "sop_index_meta.json"), "w", encoding="utf-8") as f:
+    json.dump({"embed_model": gemini.embed_model, "dim": int(embeddings.shape[1]),
+               "chunks": len(all_chunks)}, f, indent=2)
 
 print(f"Selesai: {len(all_chunks)} chunk, embedding dim {embeddings.shape[1]}, "
       f"model {gemini.embed_model} -> {RAG_DIR}/sop_faiss.index")

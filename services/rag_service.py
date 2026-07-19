@@ -1,4 +1,6 @@
 import json
+import os
+
 import numpy as np
 import faiss
 
@@ -13,6 +15,14 @@ class RagService:
         # boleh pakai instance GeminiService yang sudah ada (dishare dari main.py),
         # atau bikin baru kalau dipanggil berdiri sendiri.
         self.gemini = gemini_service or GeminiService(api_key=google_api_key)
+        # Kalau ada metadata index (ditulis build_index.py / notebook), pakai model embedding
+        # yang MEMBANGUN index itu — query wajib satu model dengan index, apa pun default env.
+        meta_path = os.path.join(os.path.dirname(faiss_index_path) or ".", "sop_index_meta.json")
+        if os.path.exists(meta_path):
+            with open(meta_path, encoding="utf-8") as f:
+                meta = json.load(f)
+            if meta.get("embed_model"):
+                self.gemini.embed_model = meta["embed_model"]
 
     def retrieve(self, query, top_k=3):
         # allow_fallback=False: query WAJIB pakai model embedding yang sama dengan
@@ -33,7 +43,11 @@ class RagService:
         # Query dibangun dari seluruh konteks kejadian, bukan cuma priority + damage%,
         # supaya retrieval-nya berbeda antar kasus (tidak degenerate ke 4 query yang sama).
         logistics = ", ".join(stats.get("required_logistics", []))
-        query = (f"Prioritas {stats['priority']}, kerusakan bangunan {stats['damage_percentage']}%, "
+        event = ""
+        if stats.get("disaster_type") or stats.get("location"):
+            event = (f"Bencana {stats.get('disaster_type', '')} "
+                     f"di {stats.get('location', 'lokasi tidak diketahui')}. ").replace("  ", " ")
+        query = (f"{event}Prioritas {stats['priority']}, kerusakan bangunan {stats['damage_percentage']}%, "
                  f"{stats.get('buildings_damaged', '?')} dari {stats.get('buildings_total', '?')} bangunan rusak, "
                  f"estimasi luas terdampak {stats.get('area_m2', '?')} m2, "
                  f"radius evakuasi {stats.get('evacuation_radius_km', '?')} km. "

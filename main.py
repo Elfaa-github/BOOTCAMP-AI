@@ -16,7 +16,7 @@ import time
 import cv2
 import numpy as np
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 
 from services.model_service import ModelService
@@ -113,7 +113,14 @@ def _count_buildings(binary_mask: np.ndarray, min_area_px: int = 20) -> int:
 # Endpoint utama
 # ----------------------------------------------------------------------
 @app.post("/analyze")
-async def analyze(pre_image: UploadFile = File(...), post_image: UploadFile = File(...)):
+async def analyze(
+    pre_image: UploadFile = File(...),
+    post_image: UploadFile = File(...),
+    location: str = Form(None),
+    disaster_type: str = Form(None),
+    center_lat: float = Form(None),
+    center_lon: float = Form(None),
+):
     request_start = time.time()
     logger.info("Request diterima: pre=%s, post=%s", pre_image.filename, post_image.filename)
 
@@ -175,6 +182,33 @@ async def analyze(pre_image: UploadFile = File(...), post_image: UploadFile = Fi
         })
     except Exception as e:
         logger.warning("Gagal menghitung estimasi jumlah bangunan/area (non-fatal): %s", e)
+
+    # --- 3b) Konteks kejadian + koordinat bangunan rusak (untuk tim lapangan/SAR) ---
+    if location:
+        stats["location"] = location
+    if disaster_type:
+        stats["disaster_type"] = disaster_type
+    try:
+        h, w = diff.shape[:2]
+        n_blobs, _, blob_stats, blob_cents = cv2.connectedComponentsWithStats((diff == 2).astype(np.uint8))
+        blobs = [(blob_cents[i][0], blob_cents[i][1], int(blob_stats[i, cv2.CC_STAT_AREA]))
+                 for i in range(1, n_blobs) if blob_stats[i, cv2.CC_STAT_AREA] >= 20]
+        blobs.sort(key=lambda b: -b[2])  # terbesar dulu — prioritas tim lapangan
+        locations = []
+        for cx, cy, area_px in blobs[:100]:
+            item = {"pixel_x": int(cx), "pixel_y": int(cy),
+                    "area_m2": round(area_px * GSD_METERS_PER_PIXEL ** 2, 1)}
+            if center_lat is not None and center_lon is not None:
+                # Konversi piksel -> lat/lon: aproksimasi equirectangular di sekitar pusat citra.
+                # Cukup akurat untuk area kecil (beberapa km); bukan pengganti georeference GeoTIFF asli.
+                dy_m = (cy - h / 2) * GSD_METERS_PER_PIXEL
+                dx_m = (cx - w / 2) * GSD_METERS_PER_PIXEL
+                item["lat"] = round(center_lat - dy_m / 111320.0, 6)
+                item["lon"] = round(center_lon + dx_m / (111320.0 * max(float(np.cos(np.radians(center_lat))), 1e-6)), 6)
+            locations.append(item)
+        stats["damaged_building_locations"] = locations
+    except Exception as e:
+        logger.warning("Gagal menghitung koordinat bangunan rusak (non-fatal): %s", e)
 
     # --- 4) RAG Service: retrieval + Gemini report generation ---
     rag_time = None
