@@ -296,14 +296,21 @@ if pre_bytes and post_bytes:
     st.subheader("Konteks kejadian (opsional, disarankan)")
     cc1, cc2, cc3, cc4 = st.columns(4)
     location = cc1.text_input("Lokasi", placeholder="Palu, Sulawesi Tengah")
-    disaster_type = cc2.selectbox("Jenis bencana",
-                                  ["", "Tsunami",
-                                   "Gempa bumi — coming soon", "Banjir — coming soon",
-                                   "Tanah longsor — coming soon", "Erupsi gunung api — coming soon"])
-    coming_soon = "coming soon" in disaster_type
-    if coming_soon:
-        st.warning("Model saat ini dilatih khusus **Tsunami** (xBD Palu). Jenis bencana lain sedang "
-                   "disiapkan — pilih Tsunami untuk menjalankan analisis.")
+    # Hanya Tsunami yang didukung model saat ini (xBD Palu) — aktif tanpa perlu dipilih.
+    # Jenis lain ditampilkan sebagai tombol NON-AKTIF (bukan opsi yang bisa dipilih lalu diblokir)
+    # supaya jelas sejak awal bahwa opsi itu belum bisa diklik, bukan baru ketahuan setelah dipilih.
+    disaster_type = "Tsunami"
+    coming_soon = False
+    cc2.markdown(
+        '<div style="padding-top:0.4rem;">'
+        '<span style="background:#f0fdf4;color:#16a34a;border:1px solid #16a34a40;'
+        'padding:6px 12px;border-radius:9999px;font-size:0.85rem;font-weight:600;">'
+        '&#9679; Tsunami</span></div>', unsafe_allow_html=True)
+    cc2.caption("Jenis bencana lain:")
+    soon_cols = cc2.columns(4)
+    for col, label in zip(soon_cols, ["Gempa bumi", "Banjir", "Longsor", "Erupsi"]):
+        col.button(label, disabled=True, key=f"soon_{label}", use_container_width=True,
+                  help="Coming soon — model belum dilatih untuk jenis bencana ini")
     # Koordinat diisi otomatis, urut akurasi: metadata sample xBD > EXIF gambar > geocode nama lokasi.
     # Field manual tetap ada sebagai override.
     label_file = st.file_uploader("Opsional: file label xBD (.json) — georeference otomatis untuk tile xBD mana pun",
