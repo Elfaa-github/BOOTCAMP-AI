@@ -297,7 +297,13 @@ if pre_bytes and post_bytes:
     cc1, cc2, cc3, cc4 = st.columns(4)
     location = cc1.text_input("Lokasi", placeholder="Palu, Sulawesi Tengah")
     disaster_type = cc2.selectbox("Jenis bencana",
-                                  ["", "Tsunami", "Gempa bumi", "Banjir", "Tanah longsor", "Erupsi gunung api", "Lainnya"])
+                                  ["", "Tsunami",
+                                   "Gempa bumi — coming soon", "Banjir — coming soon",
+                                   "Tanah longsor — coming soon", "Erupsi gunung api — coming soon"])
+    coming_soon = "coming soon" in disaster_type
+    if coming_soon:
+        st.warning("Model saat ini dilatih khusus **Tsunami** (xBD Palu). Jenis bencana lain sedang "
+                   "disiapkan — pilih Tsunami untuk menjalankan analisis.")
     # Koordinat diisi otomatis, urut akurasi: metadata sample xBD > EXIF gambar > geocode nama lokasi.
     # Field manual tetap ada sebagai override.
     label_file = st.file_uploader("Opsional: file label xBD (.json) — georeference otomatis untuk tile xBD mana pun",
@@ -327,11 +333,11 @@ if pre_bytes and post_bytes:
         st.caption("Ketik nama lokasi di kolom pertama — koordinat terisi otomatis. "
                    "(Atau isi lat/lon manual.)")
 
-    if st.button("Run Full Analysis", type="primary", use_container_width=True):
+    if st.button("Run Full Analysis", type="primary", use_container_width=True, disabled=coming_soon):
         form_data = {}
         if location:
             form_data["location"] = location
-        if disaster_type:
+        if disaster_type and not coming_soon:
             form_data["disaster_type"] = disaster_type
         try:
             form_data["center_lat"] = float(center_lat)
